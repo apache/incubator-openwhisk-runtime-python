@@ -28,50 +28,25 @@ RUN git clone --branch ${GO_PROXY_GITHUB_BRANCH} \
 FROM golang:1.15 AS builder_release
 ARG GO_PROXY_RELEASE_VERSION=1.15@1.17.0
 RUN curl -sL \
-  https://github.com/apache/openwhisk-runtime-go/archive/${GO_PROXY_RELEASE_VERSION}.tar.gz\
+  https://github.com/apache/openwhisk-runtime-go/archive/{$GO_PROXY_RELEASE_VERSION}.tar.gz\
   | tar xzf -\
   && cd openwhisk-runtime-go-*/main\
   && GO111MODULE=on go build -o /bin/proxy
 
-# Dockerfile for python AI actions, overrides and extends ActionRunner from actionProxy
-FROM tensorflow/tensorflow:1.15.2-py3-jupyter
+FROM python:3.9-buster
 
 # select the builder to use
-ARG GO_PROXY_BUILD_FROM=release
+ARG GO_PROXY_BUILD_FROM=source
 
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
-            curl \
-            gcc \
-            libc-dev \
-            libxslt-dev \
-            libxml2-dev \
-            libffi-dev \
-            libssl-dev \
-            zip \
-            unzip \
-            vim \
-            && rm -rf /var/lib/apt/lists/*
-
-# PyTorch
-RUN pip3 install torch torchvision
-
-# rclone
-RUN curl -L https://downloads.rclone.org/rclone-current-linux-amd64.deb -o rclone.deb \
-    && dpkg -i rclone.deb \
-    && rm rclone.deb
-
+# Install common modules for python
 COPY requirements.txt requirements.txt
-RUN pip3 install --upgrade pip six &&\
-    pip3 install --no-cache-dir -r requirements.txt &&\
-    ln -sf /usr/bin/python3 /usr/local/bin/python
+RUN pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir -p /action
 WORKDIR /
-
 COPY --from=builder_source /bin/proxy /bin/proxy_source
 COPY --from=builder_release /bin/proxy /bin/proxy_release
 RUN mv /bin/proxy_${GO_PROXY_BUILD_FROM} /bin/proxy
-
 ADD bin/compile /bin/compile
 ADD lib/launcher.py /lib/launcher.py
 
@@ -80,9 +55,8 @@ ENV OW_LOG_INIT_ERROR=1
 # the launcher must wait for an ack
 ENV OW_WAIT_FOR_ACK=1
 # using the runtime name to identify the execution environment
-ENV OW_EXECUTION_ENV=openwhisk/action-python-v3.6-ai
+ENV OW_EXECUTION_ENV=openwhisk/action-python-v3.9
 # compiler script
 ENV OW_COMPILER=/bin/compile
-# use utf-8
-ENV PYTHONIOENCODING=UTF-8
+
 ENTRYPOINT ["/bin/proxy"]

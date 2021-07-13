@@ -39,13 +39,13 @@ script:
   - "./tools/travis/build.sh && ./tools/travis/test.sh"
 deploy:
   - provider: script
-    script: "./tools/travis/publish.sh openwhisk ${TRAVIS_TAG%@*} ${TRAVIS_TAG##*@}"
+    script: "./tools/travis/publish.sh openwhisk ${TRAVIS_TAG%@*} ${TRAVIS_TAG##*@}" && && ./tools/travis/publish.sh openwhisk 39 nightly"
     on:
       tags: true
       all_branches: true
       repo: apache/openwhisk-runtime-python
   - provider: script
-    script: "./tools/travis/publish.sh openwhisk 3 nightly && ./tools/travis/publish.sh openwhisk 3-ai nightly"
+    script: "./tools/travis/publish.sh openwhisk 3 nightly && ./tools/travis/publish.sh openwhisk 3-ai nightly" && ./tools/travis/publish.sh openwhisk 39 ${TRAVIS_TAG}"
     on:
       branch: master
       repo: apache/openwhisk-runtime-python

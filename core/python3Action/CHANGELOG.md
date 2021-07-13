@@ -19,6 +19,11 @@
 
 # Python 3 OpenWhisk Runtime Container
 
+# to include
+ - Use 1.17.1 of openwhisk-runtime-go to support symlinks in zips (required for virtualenvs)
+ - Support for python-3.9
+ - Support for generating actions with virtualenvs resolving requirements.txt
+
 ## 1.16.0
   - Introduce tutorial to deploy python runtimes locally (#101)
   - Use 1.17.0 release of openwhisk-runtime-go (#98)

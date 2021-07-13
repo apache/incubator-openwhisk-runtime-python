@@ -47,10 +47,9 @@ Build using Python 3.7 (recommended)
 ```
 docker build -t actionloop-python-v3.7:1.0-SNAPSHOT $(pwd)/core/python3ActionLoop
 ```
-This tutorial assumes you're building with python 3.7. But if you want to use python 2.7 you can use:
-```
-docker build -t actionloop-python-v2.7:1.0-SNAPSHOT $(pwd)/core/python2ActionLoop
-```
+
+For runtime 3.9 or 3.6-ai you need also to copy `bin` and `lib` folders from 3.7 in the Docker folder.
+
 
 2.1. Check docker `IMAGE ID` (3rd column) for repository `actionloop-python-v3.7`
 ```
@@ -344,10 +343,10 @@ To build all those images, run the following command.
 
 You can optionally build a specific image by modifying the Gradle command. For example:
 ```
-./gradlew core:python3ActionLoop:distDocker
+./gradlew core:python3Action:distDocker
 ```
 
-The build will produce Docker images such as `actionloop-python-v3.7`
+The build will produce Docker images such as `action-python-v3.7`
 and will also tag the same image with the `whisk/` prefix. The latter
 is a convenience, which if you're testing with a local OpenWhisk
 stack, allows you to skip pushing the image to Docker Hub.
@@ -374,11 +373,11 @@ in first with the `docker` CLI.
 ### Using Your Image as an OpenWhisk Action
 
 You can now use this image as an OpenWhisk action. For example, to use
-the image `actionloop-python-v3.7` as an action runtime, you would run
+the image `action-python-v3.7` as an action runtime, you would run
 the following command.
 
 ```
-wsk action update myAction myAction.py --docker $DOCKER_USER/actionloop-python-v3.7
+wsk action update myAction myAction.py --docker $DOCKER_USER/action-python-v3.7
 ```
 
 ## Test Runtimes
@@ -400,14 +399,53 @@ Gradle allows you to selectively run tests. For example, the following
 command runs tests which match the given pattern and excludes all
 others.
 ```
-./gradlew :tests:test --tests *ActionLoopContainerTests*
+./gradlew :tests:test --tests Python*Tests
 ```
 
 ## Python 3 AI Runtime
-This action runtime enables developers to create AI Services with OpenWhisk. It comes with preinstalled libraries useful for running machine learning and deep learning inferences. [Read more about this runtime here](./core/python3AiActionLoop).
+This action runtime enables developers to create AI Services with OpenWhisk. It comes with preinstalled libraries useful for running machine learning and deep learning inferences. [Read more about this runtime here](./core/python3AiAction).
 
 ## Import Project into IntelliJ
 
 Follow these steps to import the project into your IntelliJ IDE.
 - Import project as gradle project.
 - Make sure the working directory is root of the project/repo.
+
+# Using extra libraries
+
+If you need more libraries for your Python action,  you can include a virtualenv in the zip file of the action.
+
+The requirement is that the zip file must have a subfolder named `virtualenv` with a script `virtualenv\bin\activate_this.py` working in an Linux AMD64 environment. It will be executed at start time to use your extra libraries.
+
+## Using requirements.txt
+
+Virtual envs are usually built listing your dependencies in a `requirements.txt`.
+
+If you have an action that requires addition libraries, you can just include `requirements.txt`.
+
+You have to create a folder `myaction` with at least two files:
+
+```
+__main__.py
+requirements.txt
+```
+
+Then zip your action and deploy to OpenWhisk, the requirements will be installed for you at init time, creating a suitable virtualenv.
+
+Keep in mind that resolving requirements involves downloading and install software, so your action timeout limit may need to be adjusted accordingly. Instead, you should consider using precompilation to resolve the requirements at build time.
+
+
+## Precompilation of a virtualenv
+
+The action containers can actually generate a virtualenv for you, provided you have a requirements.txt.
+
+
+If you have an action in the format described before (with a `requirements.txt`) you can build the zip file with the included files with:
+
+```
+zip -j -r myaction | docker run -i action-python-v3.7 -compile main >myaction.zip
+```
+
+You may use `v3.9` or `v3.6-ai` as well according to your Python version needs.
+
+The resulting action includes a virtualenv already built for you and that is fast to deploy and start as all the dependencies are already resolved. Note that there is a limit on the size of the zip file and this approach will not work for installing large libraries like Pandas or Numpy, instead use the provide "v.3.6-ai"  runtime instead which provides these libraries already for you.

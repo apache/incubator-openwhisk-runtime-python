@@ -27,12 +27,14 @@ try:
   if os.path.isdir(path_to_virtualenv):
     # activate the virtualenv using activate_this.py contained in the virtualenv
     activate_this_file = path_to_virtualenv + '/bin/activate_this.py'
+    if not os.path.exists(activate_this_file): # try windows path
+      activate_this_file = path_to_virtualenv + '/Scripts/activate_this.py'
     if os.path.exists(activate_this_file):
       with open(activate_this_file) as f:
         code = compile(f.read(), activate_this_file, 'exec')
         exec(code, dict(__file__=activate_this_file))
     else:
-      sys.stderr.write('Invalid virtualenv. Zip file does not include /virtualenv/bin/' + os.path.basename(activate_this_file) + '\n')
+      sys.stderr.write("Invalid virtualenv. Zip file does not include 'activate_this.py'.\n")
       sys.exit(1)
 except Exception:
   traceback.print_exc(file=sys.stderr, limit=0)

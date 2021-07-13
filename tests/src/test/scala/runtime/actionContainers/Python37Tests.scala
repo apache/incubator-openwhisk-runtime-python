@@ -26,12 +26,11 @@ import org.scalatest.junit.JUnitRunner
 import spray.json._
 
 @RunWith(classOf[JUnitRunner])
-class PythonActionLoopContainerTests
-    extends PythonActionContainerTests
-    with PythonActionLoopExtraTests
-    with WskActorSystem {
+class Python37Tests extends PythonBasicTests with PythonAdvancedTests with WskActorSystem {
 
-  override lazy val imageName = "actionloop-python-v3.7"
+  override lazy val imageName = "action-python-v3.7"
+
+  lazy val zipPrefix = "python-v3.7"
 
   override val testNoSource = TestConfig("", hasCodeStub = false)
 
@@ -43,7 +42,7 @@ class PythonActionLoopContainerTests
   }
 
   it should "run zipped Python action containing a virtual environment" in {
-    val zippedPythonAction = testArtifact("python_virtualenv.zip")
+    val zippedPythonAction = testArtifact(zipPrefix + "_virtualenv.zip")
     val code = readAsBase64(zippedPythonAction.toPath)
 
     withActionContainer() { c =>
@@ -57,7 +56,7 @@ class PythonActionLoopContainerTests
   }
 
   it should "run zipped Python action containing a virtual environment with non-standard entry point" in {
-    val zippedPythonAction = testArtifact("python_virtualenv.zip")
+    val zippedPythonAction = testArtifact(zipPrefix + "_virtualenv.zip")
     val code = readAsBase64(zippedPythonAction.toPath)
 
     withActionContainer() { c =>
@@ -71,7 +70,7 @@ class PythonActionLoopContainerTests
   }
 
   it should "report error if zipped Python action has wrong main module name" in {
-    val zippedPythonAction = testArtifact("python_virtualenv_invalid_main.zip")
+    val zippedPythonAction = testArtifact(zipPrefix + "_virtualenv_invalid_main.zip")
     val code = readAsBase64(zippedPythonAction.toPath)
 
     val (out, err) = withActionContainer() { c =>
@@ -79,19 +78,22 @@ class PythonActionLoopContainerTests
       initCode should be(502)
 
       if (!errorCodeOnRun)
-        initRes.get.fields.get("error").get.toString should include regex ("No module|action failed")
+        initRes.get.fields
+          .get("error")
+          .get
+          .toString should include regex ("Cannot start action. Check logs for details.")
     }
 
     if (errorCodeOnRun)
       checkStreams(out, err, {
         case (o, e) =>
           o shouldBe empty
-          e should include("Zip file does not include __main__.py")
+          e should include("Zip file does not include")
       })
   }
 
   it should "report error if zipped Python action has invalid virtualenv directory" in {
-    val zippedPythonAction = testArtifact("python_virtualenv_invalid_venv.zip")
+    val zippedPythonAction = testArtifact(zipPrefix + "_virtualenv_invalid_venv.zip")
     val code = readAsBase64(zippedPythonAction.toPath)
 
     val (out, err) = withActionContainer() { c =>
