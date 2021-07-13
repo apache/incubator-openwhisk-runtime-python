@@ -19,17 +19,15 @@ package runtime.actionContainers
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import common.WskActorSystem
 import spray.json._
 import DefaultJsonProtocol._
 
 @RunWith(classOf[JUnitRunner])
-class Python3AiActionLoopContainerTests
-    extends PythonActionContainerTests
-    with PythonActionLoopExtraTests
-    with WskActorSystem {
+class Python36AiTests extends Python37Tests {
 
-  override lazy val imageName = "actionloop-python-v3.6-ai"
+  override lazy val imageName = "action-python-v3.6-ai"
+
+  override lazy val zipPrefix = "python-v3.6-ai"
 
   override lazy val errorCodeOnRun = false
 

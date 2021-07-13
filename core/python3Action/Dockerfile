@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 # build go proxy from source
 FROM golang:1.15 AS builder_source
-
 ARG GO_PROXY_GITHUB_USER=apache
 ARG GO_PROXY_GITHUB_BRANCH=master
 RUN git clone --branch ${GO_PROXY_GITHUB_BRANCH} \
@@ -36,20 +36,11 @@ RUN curl -sL \
 FROM python:3.7-buster
 
 # select the builder to use
-ARG GO_PROXY_BUILD_FROM=release
+ARG GO_PROXY_BUILD_FROM=source
 
 # Install common modules for python
-RUN pip install \
-    beautifulsoup4==4.6.3 \
-    httplib2==0.11.3 \
-    kafka_python==1.4.3 \
-    lxml==4.2.5 \
-    python-dateutil==2.7.3 \
-    requests==2.19.1 \
-    scrapy==1.5.1 \
-    simplejson==3.16.0 \
-    virtualenv==16.0.0 \
-    twisted==18.7.0
+COPY requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir -p /action
 WORKDIR /
@@ -63,7 +54,7 @@ ADD lib/launcher.py /lib/launcher.py
 ENV OW_LOG_INIT_ERROR=1
 # the launcher must wait for an ack
 ENV OW_WAIT_FOR_ACK=1
-# using the runtime name to identify the execution environment
+# execution environment
 ENV OW_EXECUTION_ENV=openwhisk/action-python-v3.7
 # compiler script
 ENV OW_COMPILER=/bin/compile

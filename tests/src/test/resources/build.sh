@@ -16,25 +16,17 @@
 # limitations under the License.
 #
 
-set -e
-
 if [ -f ".built" ]; then
   echo "Test zip artifacts already built, skipping"
   exit 0
 fi
 
-# see what version of python is running
-py=$(python --version 2>&1 | awk -F' ' '{print $2}')
-if [[ $py == 3.7.* ]]; then
-  echo "python version is $py (ok)"
-else
-  echo "python version is $py (not ok)"
-  echo "cannot generated test artifacts and tests will fail"
-  exit -1
-fi
-
-(cd python_virtualenv && ./build.sh && zip ../python_virtualenv.zip -r .)
-(cd python_virtualenv_invalid_main && ./build.sh && zip ../python_virtualenv_invalid_main.zip -r .)
-(cd python_virtualenv_invalid_venv && zip ../python_virtualenv_invalid_venv.zip -r .)
+for i in v3.7 v3.6-ai v3.9
+do echo "*** $i ***"
+   zip -r -j - python_virtualenv | docker run -i action-python-$i -compile main >python-${i}_virtualenv.zip
+   cp python-${i}_virtualenv.zip python-${i}_virtualenv_invalid_main.zip
+   zip -d python-${i}_virtualenv_invalid_main.zip main__.py
+   cd python_virtualenv_invalid_venv/ ; zip ../python-${i}_virtualenv_invalid_vend.zip * ; cd ..
+done
 
 touch .built

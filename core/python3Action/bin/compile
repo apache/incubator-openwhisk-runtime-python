@@ -20,7 +20,7 @@
 
 from __future__ import print_function
 import os, os.path, sys, ast, shutil, subprocess, traceback
-import importlib
+import importlib, virtualenv
 from os.path import abspath, exists, dirname
 
 # write a file creating intermediate directories
@@ -54,6 +54,24 @@ def sources(launcher, main, src_dir):
           "from main__ import main as main",
           "from main__ import %s as main" % main )
 
+# build virtualenv if there is a requirements.txt
+def virtualenv(tgt_dir):
+    # check virtualenv
+    virtualenv_dir = abspath('%s/virtualenv' % tgt_dir)
+    requirements_txt = abspath("%s/requirements.txt" % tgt_dir)
+    if exists(requirements_txt):
+        if not os.path.isdir(virtualenv_dir):
+            cmd = "python -m virtualenv %s >/tmp/err 2>/tmp/err" % virtualenv_dir
+            if os.system(cmd) != 0:
+                with open("/tmp/err", "r") as f:
+                    sys.stderr.write(f.read())
+            else:
+                cmd = ". %s/bin/activate && python -m pip install -r %s >/tmp/err 2>/tmp/err" % (virtualenv_dir, requirements_txt)
+                if os.system(cmd) != 0:
+                    with open("/tmp/err", "r") as f:
+                        sys.stderr.write(f.read())
+    sys.stderr.flush()
+
 # compile sources
 def build(src_dir, tgt_dir):
     # in general, compile your program into an executable format
@@ -64,7 +82,7 @@ def build(src_dir, tgt_dir):
     tgt_file = "%s/exec" % tgt_dir
     write_file(tgt_file, """#!/bin/bash
 export PYTHONIOENCODING=UTF-8
-if [ "$(cat $0.env)" = "$__OW_EXECUTION_ENV" ]
+if [[ "$__OW_EXECUTION_ENV" == "" || "$(cat $0.env)" == "$__OW_EXECUTION_ENV" ]]
 then cd "$(dirname $0)"
      exec /usr/local/bin/python exec__.py "$@"
 else echo "Execution Environment Mismatch"
@@ -73,25 +91,34 @@ else echo "Execution Environment Mismatch"
      exit 1
 fi
 """, True)
-    write_file("%s.env"%tgt_file, os.environ['__OW_EXECUTION_ENV'])
+    if os.environ.get("__OW_EXECUTION_ENV"):
+      write_file("%s.env"%tgt_file, os.environ['__OW_EXECUTION_ENV'])
     return tgt_file
 
 #check if a module exists
 def check(tgt_dir, module_name):
+    # activate virtualenv if any
+    path_to_virtualenv = abspath('%s/virtualenv' % tgt_dir)
+    if os.path.isdir(path_to_virtualenv):
+        activate_this_file = path_to_virtualenv + '/bin/activate_this.py'
+        if not os.path.exists(activate_this_file):
+            # check if this was packaged for windows
+            activate_this_file = path_to_virtualenv + '/Scripts/activate_this.py'
+        if os.path.exists(activate_this_file):
+            with open(activate_this_file) as f:
+                code = compile(f.read(), activate_this_file, 'exec')
+                exec(code, dict(__file__=activate_this_file))
+        else:
+            sys.stderr.write("Invalid virtualenv. Zip file does not include 'activate_this.py'.\n")
+    # check module
     try:
         sys.path.append(tgt_dir)
         mod = importlib.util.find_spec(module_name)
         if mod:
             with open(mod.origin, "rb") as f:
                 ast.parse(f.read().decode("utf-8"))
-            # check virtualenv
-            path_to_virtualenv = abspath('%s/virtualenv' % tgt_dir)
-            if os.path.isdir(path_to_virtualenv):
-                activate_this_file = path_to_virtualenv + '/bin/activate_this.py'
-                if not os.path.exists(activate_this_file):
-                   sys.stderr.write('Invalid virtualenv. Zip file does not include activate_this.py')
         else:
-            sys.stderr.write("Zip file does not include %s" % module_name)
+            sys.stderr.write("Zip file does not include %s\n" % module_name)
     except SyntaxError as er:
         sys.stderr.write(er.msg)
     except Exception as ex:
@@ -107,7 +134,8 @@ if __name__ == '__main__':
     src_dir = abspath(sys.argv[2])
     tgt_dir = abspath(sys.argv[3])
     sources(launcher, sys.argv[1], src_dir)
-    tgt = build(abspath(sys.argv[2]), tgt_dir)
+    build(abspath(sys.argv[2]), tgt_dir)
+    virtualenv(tgt_dir)
     check(tgt_dir, "main__")
     sys.stdout.flush()
     sys.stderr.flush()

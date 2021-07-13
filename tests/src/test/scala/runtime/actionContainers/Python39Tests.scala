@@ -15,5 +15,19 @@
  * limitations under the License.
  */
 
-ext.dockerImageName = 'actionloop-python-v3.7'
-apply from: '../../gradle/docker.gradle'
+package runtime.actionContainers
+
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
+
+@RunWith(classOf[JUnitRunner])
+class Python39Tests extends Python37Tests {
+
+  override lazy val imageName = "action-python-v3.9"
+
+  override lazy val zipPrefix = "python-v3.9"
+
+  override lazy val errorCodeOnRun = false
+
+  override val testNoSource = TestConfig("", hasCodeStub = false)
+}

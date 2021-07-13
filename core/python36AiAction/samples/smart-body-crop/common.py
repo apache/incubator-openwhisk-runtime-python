@@ -84,7 +84,7 @@ CocoColors = [(255, 0, 0), (255, 85, 0), (255, 170, 0), (255, 255, 0), (170, 255
 
 NMS_Threshold = 0.1
 InterMinAbove_Threshold = 6
-Inter_Threshold = 0.1
+Inter_Threashold = 0.1
 Min_Subset_Cnt = 4
 Min_Subset_Score = 0.8
 Max_Human = 96
@@ -162,7 +162,7 @@ def estimate_pose(heatMat, pafMat):
                 # if two humans share a part (same part idx and coordinates), merge those humans
                 if set(c1['uPartIdx']) & set(c2['uPartIdx']) != empty_set:
                     is_merged = True
-                    # extend human1 connections with human2 connections
+                    # extend human1 connectios with human2 connections
                     conns_by_human[h1].extend(conns_by_human[h2])
                     conns_by_human.pop(h2)  # delete human2
                     break
@@ -243,7 +243,7 @@ def get_score(x1, y1, x2, y2, pafMatX, pafMatY):
         pafYs[idx] = pafMatY[my][mx]
 
     local_scores = pafXs * vx + pafYs * vy
-    thidxs = local_scores > Inter_Threshold
+    thidxs = local_scores > Inter_Threashold
 
     return sum(local_scores * thidxs), sum(thidxs)
 

@@ -24,7 +24,7 @@ import actionContainers.{ActionContainer, BasicActionRunnerTests}
 import actionContainers.ActionContainer.withContainer
 import actionContainers.ResourceHelpers.ZipBuilder
 
-abstract class PythonActionContainerTests extends BasicActionRunnerTests with WskActorSystem {
+abstract class PythonBasicTests extends BasicActionRunnerTests with WskActorSystem {
 
   val imageName: String
 

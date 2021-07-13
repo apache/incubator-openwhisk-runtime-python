@@ -31,9 +31,11 @@ RUNTIME_VERSION=$2
 IMAGE_TAG=$3
 
 if [ ${RUNTIME_VERSION} == "3" ]; then
-  RUNTIME="python3ActionLoop"
+  RUNTIME="python3Action"
 elif [ ${RUNTIME_VERSION} == "3-ai" ]; then
-  RUNTIME="python3AiActionLoop"
+  RUNTIME="python3AiAction"
+elif [ ${RUNTIME_VERSION} == "39" ]; then
+  RUNTIME="python39Action"
 fi
 
 if [[ ! -z ${DOCKER_USER} ]] && [[ ! -z ${DOCKER_PASSWORD} ]]; then

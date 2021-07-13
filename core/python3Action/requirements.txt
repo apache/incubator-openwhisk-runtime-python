@@ -1,0 +1,11 @@
+# default available packages for python3action
+beautifulsoup4 == 4.6.3
+httplib2 == 0.11.3
+kafka_python == 1.4.3
+lxml == 4.2.5
+python-dateutil == 2.7.3
+requests == 2.19.1
+scrapy == 1.5.1
+simplejson == 3.16.0
+virtualenv == 16.0.0
+twisted == 18.7.0

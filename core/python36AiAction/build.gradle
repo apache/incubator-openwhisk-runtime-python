@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-"""Python Hello virtualenv test.
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -17,15 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-"""
-from random_user_agent.user_agent import UserAgent
-from random_user_agent.params import HardwareType, OperatingSystem
 
-def main(args):
-    user_agent_rotator = UserAgent(limit=100,
-        hardware_types=[HardwareType.COMPUTER.value],
-        operating_systems=[OperatingSystem.LINUX.value])
-    return {"agent": user_agent_rotator.get_random_user_agent()}
+ext.dockerImageName = 'action-python-v3.6-ai'
+apply from: '../../gradle/docker.gradle'
 
-def naim(args):
-    return main(args)
+distDocker.dependsOn 'copyLib'
+distDocker.dependsOn 'copyBin'
+distDocker.finalizedBy('cleanup')
+
+task copyLib(type: Copy) {
+    from '../python3Action/lib'
+    into './lib'
+}
+
+task copyBin(type: Copy) {
+    from '../python3Action/bin'
+    into './bin'
+}
+
+task cleanup(type: Delete) {
+    delete 'bin'
+    delete 'lib'
+}

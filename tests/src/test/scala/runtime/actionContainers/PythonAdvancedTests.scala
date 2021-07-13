@@ -18,8 +18,8 @@ package runtime.actionContainers
 
 import spray.json.{JsObject, JsString}
 
-trait PythonActionLoopExtraTests {
-  this: PythonActionContainerTests =>
+trait PythonAdvancedTests {
+  this: PythonBasicTests =>
 
   it should "detect termination at run" in {
     val (out, err) = withActionContainer() { c =>
